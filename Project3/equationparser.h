@@ -5,13 +5,14 @@
 #include <vector>
 #include <string>
 #include <stack>
-#include <exception>
+#include <stdexcept>
 #include <sstream>
+#include <cmath>
+#include "qcustomplot.h"
 
 using namespace std;
 
-class EquationParser
-{
+class EquationParser {
 
 public:
     EquationParser();
@@ -19,16 +20,16 @@ public:
     void setString(string input);
     void setRange(double range);
     void setPrecision(double precision);
-    void getVector(vector<double> &x_, vector<double> &y_);
-
-
+    void getVector(QVector<double>& x_, QVector<double>& y_);
+    
+    QVector<double>xVec, yVec;
+    int id;
 private:
-    //QVector<double>xVec, yVec;
-    vector<double> xVec, yVec;
     vector<string> postfix;
-    vector<pair<string, string>> varList;
     string input;
     double leftRange, rightRange, precision;
+
+    static vector<pair<string, string>> varList;
 
     int Error;
     enum ERROR_CODE {
@@ -39,17 +40,17 @@ private:
         Undefined_Variable = 4
     };
 
-    void checkInput(const string &input);
-    void checkLeftVariable(const string &input);
+    void checkInput(const string& input);
+    void checkLeftVariable(const string& input);
 
     bool isOper(char s);
     bool stopVar(char s);
     bool isNum(string input);
     int priority(char op);
 
-    void addVar(string input);
-    void replaceVar(string &input);
-    void parser(const string& input);
+    static void addVar(string input);
+    void replaceVar(string& input);
+    void parser(char unknown, const string& input);
     double calculate(double x);
 
 };
