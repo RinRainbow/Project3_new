@@ -9,15 +9,16 @@
 #include <QWidget>
 #include <QMainWindow>
 #include "qcustomplot.h"
+#include "equationparser.h"
 
-class Curve;
+//class Curve;
 
 class CurveManager
 {
 public:
     CurveManager();
     CurveManager(QCustomPlot *plot);
-    void addCurve(Curve newCurve);
+    void addCurve(QString input);
     void plotCurve();
     void clearCurve();
     void resetView();
@@ -25,7 +26,8 @@ public:
 private:
     QCustomPlot *plot;
     int curveAmount;
-    QVector<Curve> CurveList;
+    //QVector<Curve> CurveList;
+    QVector<EquationParser> EquationList;
 
     QVector<QColor> COLOR = { Qt::blue, Qt::black, Qt::red, Qt::yellow,
                               Qt::green, Qt::cyan, Qt::darkRed, Qt::darkBlue,
@@ -34,7 +36,7 @@ private:
 
 #endif // CURVEMANAGER_H
 
-
+/*
 #ifndef CURVE_H
 #define CURVE_H
 
@@ -45,13 +47,11 @@ public:
     Curve(const Curve &);
     void setId(int newId);
 
-
     void Csin();
     void Ccos();
     void Ctan();
     void Cpow(int n);
     void Cline(int m);
-    void Ccircle();
     void CmoveX(int n);
     void CmoveY(int n);
 
@@ -66,3 +66,4 @@ public:
 };
 
 #endif // CURVE_H
+*/
