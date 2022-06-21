@@ -20,6 +20,8 @@ private slots:
 
     void drawerMouseMoved(QMouseEvent *event);
 
+    void drawerMousePressed(QMouseEvent *event);
+
     //void toggleVisibility();
 
     void on_createFunction_clicked();

@@ -1,6 +1,8 @@
 #include "mainwindow.h"
+#include "equationparser.h"
 #include "ui_mainwindow.h"
 #include <string>
+#include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -39,7 +41,7 @@ MainWindow::MainWindow(QWidget *parent)
     customPlot->yAxis->setLabel("y");
     // set axes ranges, so we see all data:
     customPlot->xAxis->setRange(-100, 100);
-    customPlot->yAxis->setRange(-10000, 10000);
+    customPlot->yAxis->setRange(-100, 100);
     // set tick count
     customPlot->xAxis->ticker()->setTickCount(6);
     customPlot->yAxis->ticker()->setTickCount(6);
@@ -105,6 +107,31 @@ void MainWindow::drawerMouseMoved(QMouseEvent *event){
     ui->drawer->replot();
 }
 
+void MainWindow::drawerMousePressed(QMouseEvent *event) {
+    // add phase trace
+    for(int i = 0; i < graphCount; i++) {
+        if(customPlot->graph(i)->selected()) {
+            // add phase tracer
+            phaseTracer = new QCPItemTracer(customPlot);
+            phaseTracer->setGraph(customPlot->graph(i));
+            phaseTracer->setGraphKey(0.0);
+            phaseTracer->setStyle(QCPItemTracer::tsCrosshair);
+            phaseTracer->setPen(QPen(Qt::red));
+            phaseTracer->setBrush(Qt::red);
+            phaseTracer->setSize(7);
+
+            // add label for phase tracer
+            phaseTracerText = new QCPItemText(customPlot);
+            phaseTracerText->position->setType(QCPItemPosition::ptAxisRectRatio);
+            phaseTracerText->setFont(QFont(font().family(), 12));
+            phaseTracerText->setPositionAlignment(Qt::AlignLeft);
+            phaseTracerText->position->setCoords(QPointF(0, 0));
+            phaseTracerText->setText("(-, -)");
+            break;
+        }
+    }
+}
+
 /*
 void MainWindow::toggleVisibility(){
     if(!item) return;
@@ -121,9 +148,9 @@ void MainWindow::on_createFunction_clicked()
 
     QCheckBox* showMe = new QCheckBox();
     showMe->setChecked(true);
-    QLabel* label = new QLabel("");  // v X
+    QLabel* label = new QLabel("");  // O X
     QLineEdit* inputFunction = new QLineEdit("");
-    QPushButton* bye = new QPushButton("🗑");
+    QPushButton* bye = new QPushButton("delete");
     QHBoxLayout* hlayout = new QHBoxLayout;
     hlayout->addWidget(showMe);
     hlayout->addWidget(label);
@@ -140,9 +167,10 @@ void MainWindow::on_createFunction_clicked()
     pushBotton.push_back(bye);
     hl.push_back(hlayout);
 
-    QVector<double> x(999999), y(999999);
-    for(int i = 0; i < 999999; i++) {
-        x[i] = i/50.0 - 9999;
+    /*
+    QVector<double> x(DBL_MAX), y(DBL_MAX);
+    for(int i = 0; i < DBL_MAX; i++) {
+        x[i] = i/50.0 - DBL_MAX;
         y[i] = x[i] * x[i]; // input: connect to the back_end ^_^
     }
     customPlot->graph(graphCount)->setData(x, y);
@@ -165,9 +193,13 @@ void MainWindow::on_createFunction_clicked()
     label->setPalette(palette);
     label->setText(" ");
     customPlot->graph(graphCount)->setPen(color);
+    */
 
     connect(showMe, SIGNAL(clicked()), this, SLOT(on_showMe_stateChanged()));
     connect(bye, SIGNAL(pressed()), this, SLOT(on_bye_clicked()));
+    connect(inputFunction, SIGNAL(returnPressed()), this, SLOT(on_inputFunction_editingFinished()));
+    //connect(customPlot, SIGNAL(mousePress(QMouseEvent*)), this, SLOT(drawerMousePressd(QMouseEvent*)));
+    //connect(customPlot, SIGNAL(mouseMove(QMouseEvent*)), this, SLOT(drawerMouseMoved(QMouseEvent*)));
 
     customPlot->replot();
 }
@@ -185,7 +217,65 @@ void MainWindow::on_showMe_stateChanged()
 void MainWindow::on_inputFunction_editingFinished()
 {
     qDebug() << "inputFunction editing finished!!";
-    // addCurve
+    for(unsigned long i = 0; i < lineEdit.size(); i++) {
+        if(lineEdit[i] == sender()) {
+
+            EquationParser equation;
+
+            equation.id = i;
+            equation.setString(lineEdit[i]->text().toStdString());
+            if(equation.exception) {
+
+                // QMessageBox
+                QMessageBox::warning(this, tr("warning"), tr(equation.warning.c_str()));
+                /*
+                QMessageBox msgBox(this);
+                msgBox.setText(tr(equation.warning.c_str()));
+                msgBox.setWindowTitle(tr("warning"));
+                msgBox.setDefaultButton(QMessageBox::Ok);
+                msgBox.
+                */
+
+                lab[i]->setText("X");
+                QPalette palette = lab[i]->palette();
+                palette.setColor(lab[i]->backgroundRole(), Qt::white);
+                palette.setColor(lab[i]->foregroundRole(), Qt::black);
+                //qDebug() << e.what() << "\n";
+                customPlot->replot();
+            }
+            else {
+                customPlot->graph(i)->setData(equation.xVec, equation.yVec);
+                //plot->addGraph();
+                //customPlot->graph(equation.id)->setPen(COLOR[qrand() % COLOR.size()]);
+                QColor color = QColorDialog::getColor(
+                    "#800a64c8",
+                    this,
+                    tr("choose color"),
+                    QColorDialog::ShowAlphaChannel
+                );
+                if (color.isValid()) {
+                    color.name();
+                    color.name(QColor::HexArgb);
+                    int r, g, b, a;
+                    color.getRgb(&r, &g, &b, &a);
+                }
+                QPalette palette = lab[i]->palette();
+                palette.setColor(lab[i]->backgroundRole(), color);
+                palette.setColor(lab[i]->foregroundRole(), Qt::black);
+                lab[i]->setAutoFillBackground(true);
+                lab[i]->setPalette(palette);
+                lab[i]->setText("O");
+                customPlot->graph(i)->setPen(color);
+                //EquationList.push_back(equation);
+                //curveAmount++;
+                customPlot->replot();
+            }
+
+
+            break;
+        }
+    }
+
 }
 
 
