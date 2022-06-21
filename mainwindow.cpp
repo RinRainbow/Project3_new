@@ -223,8 +223,10 @@ void MainWindow::on_inputFunction_editingFinished()
             EquationParser equation;
 
             equation.id = i;
-            equation.setString(lineEdit[i]->text().toStdString());
-            if(equation.exception) {
+            try {
+                equation.setString(lineEdit[i]->text().toStdString());
+            }
+            catch (logic_error& e) {
 
                 // QMessageBox
                 QMessageBox::warning(this, tr("warning"), tr(equation.warning.c_str()));
@@ -243,7 +245,7 @@ void MainWindow::on_inputFunction_editingFinished()
                 //qDebug() << e.what() << "\n";
                 customPlot->replot();
             }
-            else {
+            if (!equation.exception) {
                 customPlot->graph(i)->setData(equation.xVec, equation.yVec);
                 //plot->addGraph();
                 //customPlot->graph(equation.id)->setPen(COLOR[qrand() % COLOR.size()]);
@@ -303,6 +305,14 @@ void MainWindow::on_bye_clicked()
             break;
         }
     }
+    customPlot->replot();
+}
+
+
+void MainWindow::on_btn_recovery_clicked()
+{
+    customPlot->xAxis->setRange(-10, 10);
+    customPlot->yAxis->setRange(-10, 10);
     customPlot->replot();
 }
 

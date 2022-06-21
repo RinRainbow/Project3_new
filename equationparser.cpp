@@ -4,9 +4,9 @@ vector<pair<string, string>> EquationParser::varList = {};
 
 EquationParser::EquationParser() {
     this->input = "";
-    this->leftRange = -999;
-    this->rightRange = 999;
-    this->precision = 0.001;
+    this->leftRange = -500  ;
+    this->rightRange = 500;
+    this->precision = 0.005;
 }
 
 EquationParser::EquationParser(string input, double range, double precision) {
@@ -27,10 +27,14 @@ void EquationParser::setString(string input) {
 
     // input processing
     // remove space
+
     input.erase(std::remove(input.begin(), input.end(), ' '), input.end());
 
     // left is y
     double Max = 100000000;
+    double Inf = log(0);
+    double NaN = log(-1.0);
+    auto sign = [] (double d) { return d < 0 ? -1 : 1; };
     if (input[0] == 'y') {
         size_t found = input.find("=");
         string rightStr = input.substr(found + 1);
@@ -42,26 +46,26 @@ void EquationParser::setString(string input) {
             y = calculate(x);
             xVec.push_back(x);
             yVec.push_back(y);
-            /*
-            if (yVec.size() > 2) {
-                double preY = yVec[yVec.size() - 2],
-                    curY = yVec[yVec.size() - 1];
+            
+            if (xVec.size() < 2)
+                continue;
+            double preY = yVec[yVec.size() - 2],
+                curY = yVec[yVec.size() - 1];
+            if (abs(curY - preY) > 500 && ((preY > 0 && curY < 0) || (preY < 0 && curY > 0))) {
+                xVec.insert(xVec.size() - 1, x);
+                xVec.insert(xVec.size() - 1, x);
+                xVec.insert(xVec.size() - 1, x);
 
-                if ((curY - preY) > 100) {
-                    if (curY > 0) {
-                        xVec.push_back(x);
-                        xVec.push_back(std::numeric_limits<double>::quiet_NaN());
-                        yVec.push_back(y + Max);
-                        yVec.push_back(std::numeric_limits<double>::quiet_NaN());
-                    } else {
-                        xVec.insert(xVec.size() - 2, std::numeric_limits<double>::quiet_NaN());
-                        xVec.insert(xVec.size() - 2, x);
-                        yVec.insert(yVec.size() - 2, std::numeric_limits<double>::quiet_NaN());
-                        yVec.insert(yVec.size() - 2, y - Max);
-                    }
-                }
+                yVec.insert(yVec.size() - 1, sign(preY) * Inf);
+                yVec.insert(yVec.size() - 1, NaN);
+                yVec.insert(yVec.size() - 1, sign(curY) * Inf);
+            } else if (qIsNaN(curY) && (preY < 0 || preY >0)) {
+                xVec.insert(xVec.size() - 1, x);
+                yVec.insert(yVec.size() - 1, sign(preY) * Max);
+            } else if (qIsNaN(preY) && (curY < 0 || curY >0)) {
+                xVec.insert(xVec.size() - 1, x);
+                yVec.insert(yVec.size() - 1, sign(curY) * Max);
             }
-            */
         }
     }
     // left is x
@@ -78,17 +82,26 @@ void EquationParser::setString(string input) {
             x = calculate(y);
             xVec.push_back(x);
             yVec.push_back(y);
-            /*
-            if (xVec.size() > 2) {
-                double preX = xVec[xVec.size() - 2],
-                    curX = xVec[xVec.size() - 1];
 
-                if (abs(curX - preX) > 40) {
-                    xVec.push_back(x + Max);
-                    yVec.push_back(y);
-                }
+            if (xVec.size() < 2)
+                continue;
+            double preX = xVec[xVec.size() - 2],
+                curX = xVec[xVec.size() - 1];
+            if (abs(curX - preX) > 500 && ((preX > 0 && curX < 0) || (preX < 0 && curX > 0))) {
+                yVec.insert(yVec.size() - 1, y);
+                yVec.insert(yVec.size() - 1, y);
+                yVec.insert(yVec.size() - 1, y);
+
+                xVec.insert(xVec.size() - 1, sign(preX) * Inf);
+                xVec.insert(xVec.size() - 1, NaN);
+                xVec.insert(xVec.size() - 1, sign(curX) * Inf);
+            } else if (qIsNaN(curX) && (preX < 0 || preX >0)) {
+                xVec.insert(xVec.size() - 1, sign(preX) * Max);
+                yVec.insert(yVec.size() - 1, y);
+            } else if (qIsNaN(preX) && (curX < 0 || curX >0)) {
+                xVec.insert(xVec.size() - 1, sign(curX) * Max);
+                yVec.insert(yVec.size() - 1, y);
             }
-            */
         }
     }
     // Is variable
@@ -106,10 +119,9 @@ void EquationParser::checkInput(const string& input) {
     // check number of equal sign
     size_t countEqual = count(input.begin(), input.end(), '=');
     if (countEqual != 1) {
-        //throw "Invalid input about '='";
         exception = true;
         warning = "Invalid input about '='";
-        return;
+        throw logic_error("Invalid input about '='");
     }
 
     for (int i = 0; i < input.size(); i++) {
@@ -118,10 +130,9 @@ void EquationParser::checkInput(const string& input) {
         // check if input exists invaild character
         size_t found = vaildStr.find(c);
         if (found == string::npos) {
-            //throw "Invalid input about illegal character";
             exception = true;
             warning = "Invalid input about illegal character";
-            return;
+            throw logic_error("Invalid input about illegal character");
         }
 
         // check if the parentheses brackets valid
@@ -132,25 +143,22 @@ void EquationParser::checkInput(const string& input) {
             bracket--;
             rightBracketIdx = i;
             if (leftBracketIdx + 1 == rightBracketIdx) {
-                //throw "Parenthese bracket is empty";
                 exception = true;
                 warning = "Parenthese bracket is empty";
-                return;
+                throw logic_error("Parenthese bracket is empty");
             }
         }
         if (bracket < 0) {
-            //throw "Imcomplete parentheses brackets";
             exception = true;
             warning = "Imcomplete parentheses brackets";
-            return;
+            throw logic_error("Imcomplete parentheses brackets");
         }
     }
 
     if (bracket != 0) {
-        //throw "Imcomplete parentheses brackets";
         exception = true;
         warning = "Imcomplete parentheses brackets";
-        return;
+        throw logic_error("Imcomplete parentheses brackets");
     }
 
 }
@@ -158,17 +166,15 @@ void EquationParser::checkInput(const string& input) {
 void EquationParser::checkLeftVariable(const string& input) {
     size_t foundEqualIdx = input.find('=');
     if (foundEqualIdx == string::npos) {
-        //throw "Invalid input about '='";
         exception = true;
         warning = "Invalid input about '='";
-        return;
+        throw logic_error("Invalid input about '='");
     }
     for (int i = 0; i < foundEqualIdx; i++) {
         if (isOper(input[i])) {
-            //throw "Invalid input about left equation";
             exception = true;
             warning = "Invalid input about left equation";
-            return;
+            throw logic_error("Invalid input about left equation");
         }
     }
 }
@@ -288,18 +294,16 @@ void EquationParser::addVar(string input) {
                 continue;
 
             if (varList.size() == 0) {
-                //throw "Exist undefined variable";
                 exception = true;
                 warning = "Exist undefined variable";
-                return;
+                throw logic_error("Exist undefined variable");
             }
             for (auto varPair : varList) {
                 size_t foundVar = varTmp.find(varPair.first);
                 if (foundVar == string::npos) {
-                    //throw "Exist undefined variable";
                     exception = true;
                     warning = "Exist undefined variable";
-                    return;
+                    throw logic_error("Exist undefined variable");
                 } else {
                     num.erase(foundVar, varPair.first.size());
                     num.insert(foundVar, "(" + varPair.second + ")");
@@ -313,10 +317,9 @@ void EquationParser::addVar(string input) {
     for (auto& v : varList) {
         if (v.first == var) {
             exist = 1;
-            //throw "Variable already exist";
             exception = true;
             warning = "Variable already exist";
-            return;
+            throw logic_error("Variable already exist");
         }
     }
     if (!exist) {
@@ -363,10 +366,9 @@ void EquationParser::replaceVar(string& input) {
                     }
                 }
                 if (!foundVar) {
-                    //throw "Undefined variable";
                     exception = true;
                     warning = "Undefined variable";
-                    return;
+                    throw logic_error("Undefined variable");
                 }
             }
 
@@ -445,10 +447,9 @@ void EquationParser::parser(char unknown, const string& input) {
                 }
             }
             if (!isFunc) {
-                //throw "function error";
                 exception = true;
                 warning = "function error";
-                return;
+                throw logic_error("function error");
             }
         }
 
@@ -460,10 +461,9 @@ void EquationParser::parser(char unknown, const string& input) {
                 else if (c == '+')
                     c = '#';
                 else if (!preRightBracket && !(c <= 'z' && c >= 'a')) {
-                    //throw "Operator error";
                     exception = true;
                     warning = "Operator error";
-                    return;
+                    throw logic_error("Operator error");
                 }
             }
             if (!temp.empty() && temp.top() != '(') {
@@ -547,10 +547,9 @@ double EquationParser::calculate(double x) {
             numStack.pop();
 
             if (num == 0) {
-                //throw "Divide by zero";
                 exception = true;
                 warning = "Divide by zero";
-                break;
+                throw logic_error("Divide by zero");
             }
             num = numStack.top() / num;
             numStack.pop();

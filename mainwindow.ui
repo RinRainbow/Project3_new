@@ -43,10 +43,23 @@
       <x>570</x>
       <y>60</y>
       <width>227</width>
-      <height>531</height>
+      <height>501</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout"/>
+   </widget>
+   <widget class="QPushButton" name="btn_recovery">
+    <property name="geometry">
+     <rect>
+      <x>670</x>
+      <y>570</y>
+      <width>120</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Recovery View</string>
+    </property>
    </widget>
   </widget>
  </widget>

@@ -32,6 +32,8 @@ private slots:
 
     void on_bye_clicked();
 
+    void on_btn_recovery_clicked();
+
 private:
     Ui::MainWindow *ui;
     QCustomPlot* customPlot;
