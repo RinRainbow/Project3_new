@@ -32,16 +32,6 @@ private:
     double leftRange, rightRange, precision;
 
     static vector<pair<string, string>> varList;
-
-    int Error;
-    enum ERROR_CODE {
-        No_Error = 0,
-        Invaild_Input = 1,
-        Invaild_Variable = 2,
-        Variable_Already_Exists = 3,
-        Undefined_Variable = 4
-    };
-
     void checkInput(const string& input);
     void checkLeftVariable(const string& input);
 
